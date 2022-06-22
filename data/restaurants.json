@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Test name",
+    "address": "Fakestreet 123, Fakeland",
+    "cuisine": "Brazilian",
+    "website": "https://google.com",
+    "description": "Because yes"
+  },
+  {
+    "name": "Prueba 2",
+    "address": "C/ Falsa 321, Chinatown",
+    "cuisine": "Chinese",
+    "website": "http://wikipedia.com",
+    "description": "Porque es una prueba :)"
+  },
+  {
+    "name": "Test",
+    "address": "Test",
+    "cuisine": "Test",
+    "website": "http://test.com",
+    "description": "Test"
+  },
+  {
+    "name": "Another test",
+    "address": "jejejeje",
+    "cuisine": "idontknow",
+    "website": "https://dummy.text",
+    "description": "ou yeah"
+  }
+]
