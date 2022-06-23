@@ -5,6 +5,7 @@ const path = require('path');
 const datos = []; // Test creado para recibir datos del POST del thunder client
 
 const express = require('express');
+const uuid = require('uuid'); // Returns an object with different methods that we can call to generate an ID (i.e. uuid.v4())
 const app = express();
 
 app.set('views', path.join(__dirname, 'views')); // Both this and next set is using reserved words as parameters, so views its not because the folder name that holds the html files. 2nd parameter is the path that contains the template files ** The views in the .join after dirname is the path, not a reserver key word.
@@ -33,12 +34,19 @@ app.get('/restaurants', function (req, res) {
   }); // The 2nd parameter, optional, we can use an object and set as key/properties the variables in that ejs file
 });
 
+app.get('/restaurants/:id', function (req, res) {
+  const restaurantId = req.params.id;
+  // console.log(restaurantId);
+  res.render('restaurant-detail', { rid: restaurantId });
+});
+
 app.get('/recommend', function (req, res) {
   res.render('recommend');
 });
 
 app.post('/recommend', function (req, res) {
-  const restaurant = req.body; // Guardamos todo el 'objeto' en dicha const
+  const restaurant = req.body; // Guardamos todo el objeto en dicha const ** Returns an object the req.body
+  restaurant.id = uuid.v4(); // We put id even not having that key in the object body ** In JS we can create a key with a value that didnt exist in the obj
   const filePath = path.join(__dirname, 'data', 'restaurants.json'); // Indicamos el path del archivo donde almacenara los objs
   const fileData = fs.readFileSync(filePath); // Reads the file content thx to fs (file system).
   const storedRestaurants = JSON.parse(fileData); // Transform raw data/text into a JS array/obj
