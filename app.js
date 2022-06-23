@@ -36,8 +36,31 @@ app.get('/restaurants', function (req, res) {
 
 app.get('/restaurants/:id', function (req, res) {
   const restaurantId = req.params.id;
-  // console.log(restaurantId);
-  res.render('restaurant-detail', { rid: restaurantId });
+  const filePath = path.join(__dirname, 'data', 'restaurants.json');
+  const fileData = fs.readFileSync(filePath);
+  const storedRestaurants = JSON.parse(fileData);
+  for (let i = 0; i < storedRestaurants.length; i++) {
+    if (storedRestaurants[i].id === restaurantId) {
+      return res.render('restaurant-detail', {
+        restaurantObj: storedRestaurants[i],
+      });
+    } else if (
+      i === storedRestaurants.length - 1 &&
+      storedRestaurants[i].id !== restaurantId
+    ) {
+      return res.render('error-restaurant');
+    }
+  }
+
+  // DE ESTA MANERA, ITERAMOS LA ARRAY, PERO NO PODEMOS PONER CONDICION DE CUANDO TERMINE EN EL ÚLTIMO ELEMENTO
+
+  // for (const restaurant of storedRestaurants) {
+  //   if (restaurant.id === restaurantId) {
+  //     return res.render('restaurant-detail', {
+  //       restaurantObj: restaurant,
+  //     });
+  //   }
+  // }
 });
 
 app.get('/recommend', function (req, res) {
