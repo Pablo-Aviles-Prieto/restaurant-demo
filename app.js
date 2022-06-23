@@ -6,6 +6,9 @@ const datos = []; // Test creado para recibir datos del POST del thunder client
 
 const express = require('express');
 const uuid = require('uuid'); // Returns an object with different methods that we can call to generate an ID (i.e. uuid.v4())
+
+const resData = require('./util/restaurant-data'); // Recibe un array del module exports
+const defaultRoutes = require('./routes/default');
 const app = express();
 
 app.set('views', path.join(__dirname, 'views')); // Both this and next set is using reserved words as parameters, so views its not because the folder name that holds the html files. 2nd parameter is the path that contains the template files ** The views in the .join after dirname is the path, not a reserver key word.
@@ -17,17 +20,10 @@ app.use(express.static('public')); // Helps serving the static content of the fo
 app.use(cors());
 app.use(express.json());
 
-app.get('/', function (req, res) {
-  // const htmlFilePath = path.join(__dirname, 'views', 'index.html');
-  // res.sendFile(htmlFilePath);
-  res.render('index'); // Render the so-called template (Parse a template file, with help of a template engine (like ejs) and convert it to html to send back to the browser)
-});
+app.use('/', defaultRoutes); // Every incoming request that start with '/' should be handled by defaultRoutes and in case the request doesn't match any route in that file will keep looking in the other app.js routes
 
 app.get('/restaurants', function (req, res) {
-  const filePath = path.join(__dirname, 'data', 'restaurants.json'); // Indicamos el path del archivo donde almacenara los objs
-  const fileData = fs.readFileSync(filePath); // Reads the file content thx to fs (file system).
-  const storedRestaurants = JSON.parse(fileData); // Transform raw data/text into a JS array/obj
-  // console.log(storedRestaurants);
+  const storedRestaurants = resData.getStoredRestaurants();
   res.render('restaurants', {
     numberOfRestaurants: storedRestaurants.length,
     restaurants: storedRestaurants,
@@ -36,23 +32,19 @@ app.get('/restaurants', function (req, res) {
 
 app.get('/restaurants/:id', function (req, res) {
   const restaurantId = req.params.id;
-  const filePath = path.join(__dirname, 'data', 'restaurants.json');
-  const fileData = fs.readFileSync(filePath);
-  const storedRestaurants = JSON.parse(fileData);
+  const storedRestaurants = resData.getStoredRestaurants();
   for (let i = 0; i < storedRestaurants.length; i++) {
     if (storedRestaurants[i].id === restaurantId) {
-      return res.render('restaurant-detail', {
+      return res.status(200).render('restaurant-detail', {
         restaurantObj: storedRestaurants[i],
       });
     } else if (
       i === storedRestaurants.length - 1 &&
       storedRestaurants[i].id !== restaurantId
     ) {
-      return res.render('error-restaurant');
+      return res.status(404).render('error-restaurant');
     }
   }
-
-  // DE ESTA MANERA, ITERAMOS LA ARRAY, PERO NO PODEMOS PONER CONDICION DE CUANDO TERMINE EN EL ÚLTIMO ELEMENTO
 
   // for (const restaurant of storedRestaurants) {
   //   if (restaurant.id === restaurantId) {
@@ -69,24 +61,17 @@ app.get('/recommend', function (req, res) {
 
 app.post('/recommend', function (req, res) {
   const restaurant = req.body; // Guardamos todo el objeto en dicha const ** Returns an object the req.body
-  restaurant.id = uuid.v4(); // We put id even not having that key in the object body ** In JS we can create a key with a value that didnt exist in the obj
-  const filePath = path.join(__dirname, 'data', 'restaurants.json'); // Indicamos el path del archivo donde almacenara los objs
-  const fileData = fs.readFileSync(filePath); // Reads the file content thx to fs (file system).
-  const storedRestaurants = JSON.parse(fileData); // Transform raw data/text into a JS array/obj
+  restaurant.id = uuid.v4(); // We put id even not having that key in the object body ** In JS we can create a key with a value, that didnt exist in the obj
 
+  const storedRestaurants = resData.getStoredRestaurants();
   storedRestaurants.push(restaurant);
 
-  fs.writeFileSync(filePath, JSON.stringify(storedRestaurants)); // Stores the data with a stringify (to transform in text) in the path indicated
-
+  resData.storedRestaurants(storedRestaurants);
   res.redirect('/confirm'); // To avoid reloading the page and submitting the same data again, we redirect to another page
 });
 
 app.get('/confirm', function (req, res) {
   res.render('confirm');
-});
-
-app.get('/about', function (req, res) {
-  res.render('about');
 });
 
 // Test creado para enseñar los datos del array del POST de thunder client
@@ -101,5 +86,15 @@ app.post('/manolo', function (req, res) {
   datos.push(req.body);
   res.send(reqBody);
 });
+
+// We put this middleware here to let the other middleware and routes handle the requests first, and if dont get a match, this middleware enroutes
+app.use(function (req, res) {
+  res.status(404).render('404');
+});
+
+// This middleware only executes if an error ocurred on the server. It needs 4 params (the funct) so express detects it as a middleware function for error handling.
+app.use(function (error, req, res, next) {
+  res.status(500).render('500');
+}); // Next allows us to have multiple middlewares that will work together, so we can use next() to move on to the next middleware.
 
 app.listen(3000);
