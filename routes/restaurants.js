@@ -5,17 +5,29 @@ const uuid = require('uuid'); // Returns an object with different methods that w
 const router = express.Router();
 
 router.get('/restaurants', function (req, res) {
+  const order = req.query.order || 'asc'; // req.query returns an object
+  let nextOrder = 'asc';
+
+  if (order === 'asc') {
+    nextOrder = 'desc';
+  }
+
   const storedRestaurants = resData.getStoredRestaurants();
   storedRestaurants.sort(function (a, b) {
-    if (a.name > b.name) {
+    if (
+      (order === 'asc' && a.name > b.name) ||
+      (order === 'desc' && a.name < b.name)
+    ) {
       return 1;
     } else {
       return -1;
     }
   });
+
   res.render('restaurants', {
     numberOfRestaurants: storedRestaurants.length,
     restaurants: storedRestaurants,
+    nextOrder: nextOrder,
   }); // The 2nd parameter, optional, we can use an object and set as key/properties the variables in that ejs file
 });
 
