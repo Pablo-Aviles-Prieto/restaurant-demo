@@ -1,14 +1,15 @@
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
+
+const jsonData = require('./data/restaurants.json');
 
 const datos = []; // Test creado para recibir datos del POST del thunder client
 
 const express = require('express');
-const uuid = require('uuid'); // Returns an object with different methods that we can call to generate an ID (i.e. uuid.v4())
 
-const resData = require('./util/restaurant-data'); // Recibe un array del module exports
 const defaultRoutes = require('./routes/default');
+const restaurantRoutes = require('./routes/restaurants');
+
 const app = express();
 
 app.set('views', path.join(__dirname, 'views')); // Both this and next set is using reserved words as parameters, so views its not because the folder name that holds the html files. 2nd parameter is the path that contains the template files ** The views in the .join after dirname is the path, not a reserver key word.
@@ -21,62 +22,17 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/', defaultRoutes); // Every incoming request that start with '/' should be handled by defaultRoutes and in case the request doesn't match any route in that file will keep looking in the other app.js routes
-
-app.get('/restaurants', function (req, res) {
-  const storedRestaurants = resData.getStoredRestaurants();
-  res.render('restaurants', {
-    numberOfRestaurants: storedRestaurants.length,
-    restaurants: storedRestaurants,
-  }); // The 2nd parameter, optional, we can use an object and set as key/properties the variables in that ejs file
-});
-
-app.get('/restaurants/:id', function (req, res) {
-  const restaurantId = req.params.id;
-  const storedRestaurants = resData.getStoredRestaurants();
-  for (let i = 0; i < storedRestaurants.length; i++) {
-    if (storedRestaurants[i].id === restaurantId) {
-      return res.status(200).render('restaurant-detail', {
-        restaurantObj: storedRestaurants[i],
-      });
-    } else if (
-      i === storedRestaurants.length - 1 &&
-      storedRestaurants[i].id !== restaurantId
-    ) {
-      return res.status(404).render('error-restaurant');
-    }
-  }
-
-  // for (const restaurant of storedRestaurants) {
-  //   if (restaurant.id === restaurantId) {
-  //     return res.render('restaurant-detail', {
-  //       restaurantObj: restaurant,
-  //     });
-  //   }
-  // }
-});
-
-app.get('/recommend', function (req, res) {
-  res.render('recommend');
-});
-
-app.post('/recommend', function (req, res) {
-  const restaurant = req.body; // Guardamos todo el objeto en dicha const ** Returns an object the req.body
-  restaurant.id = uuid.v4(); // We put id even not having that key in the object body ** In JS we can create a key with a value, that didnt exist in the obj
-
-  const storedRestaurants = resData.getStoredRestaurants();
-  storedRestaurants.push(restaurant);
-
-  resData.storedRestaurants(storedRestaurants);
-  res.redirect('/confirm'); // To avoid reloading the page and submitting the same data again, we redirect to another page
-});
-
-app.get('/confirm', function (req, res) {
-  res.render('confirm');
-});
+app.use('/', restaurantRoutes);
 
 // Test creado para enseñar los datos del array del POST de thunder client
 app.get('/manolo', function (req, res) {
-  res.status(200).json(datos);
+  res.status(200).json(jsonData);
+});
+
+// Test creado para POST en html-forms
+app.post('/formdata', function (req, res) {
+  console.log(req.body);
+  res.status(200).json(req.body);
 });
 
 // Test creado para thunder client post
